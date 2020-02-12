@@ -1,0 +1,51 @@
+plugins {
+    id 'java'
+}
+
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "application"
+
+group 'org.apache'
+version '1.0'
+
+sourceCompatibility = 1.8
+//mainClassName = "io.pravega.example.writers.SocketWriter"
+mainClassName = "io.pravega.example.writers.MqttWriter"
+
+repositories {
+    maven {
+          url 'https://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    maven {
+          url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'
+    }
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    runtime files ('lib/pravega-keycloak-credentials-0.5.0-2306.a5a5cdf-0.11.10-002.985e705-shadow.jar')
+    compile "io.pravega:pravega-client:${pravegaVersion}"
+
+    // common-library dependencies
+    compile "com.google.guava:guava:20.0"
+    compile "org.xerial:sqlite-jdbc:3.20.0"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.1"
+    compile group: 'org.fusesource.mqtt-client', name: 'mqtt-client', version: '1.14'
+}
+
+jar {
+    zip64 true
+    manifest {
+        attributes "Main-Class": mainClassName
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
