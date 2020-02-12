@@ -18,8 +18,5 @@ FROM openjdk:8-jre
 ENV APP_NAME PravegaGateway
 ENV APP_HOME /opt/$APP_NAME
 
-ENV pravega_client_auth_method=Bearer
-ENV pravega_client_auth_loadDynamic=true
-
 COPY --from=GradleBuilder /home/gradle/PravegaGateway/build/install/$APP_NAME $APP_HOME
 ENTRYPOINT $APP_HOME/bin/$APP_NAME
