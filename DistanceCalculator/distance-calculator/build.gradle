@@ -1,0 +1,106 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.3'
+    id 'java'
+}
+
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "application"
+apply plugin: "maven-publish"
+
+version = 4.0
+archivesBaseName = "distance-calculator"
+description = "distance-calculator"
+mainClassName = "io.pravega.flinkapp.distancecalculator"
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+group 'io.pravega.examples'
+
+repositories {
+    maven {
+        url 'http://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    maven {
+        url 'http://maven.aliyun.com/nexus/content/repositories/jcenter'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    // Note that we must include the Elasticsearch client early in the classpath to avoid Netty version conflicts.
+    compile "io.pravega:pravega-connectors-flink_2.12:${pravegaFlinkConnectorVersion}"
+    compile "org.apache.flink:flink-streaming-java_2.11:${flinkVersion}"
+    compile "org.apache.flink:flink-streaming-scala_2.11:${flinkVersion}"
+    compile "org.apache.flink:flink-ml_2.11:${flinkVersion}"
+    compile "io.pravega:pravega-client:${pravegaVersion}"
+
+    // common-library dependencies
+    compile "com.google.guava:guava:20.0"
+    compile 'org.mongodb:mongo-java-driver:3.10.2'
+    compile "org.xerial:sqlite-jdbc:3.20.0"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.1"
+
+
+    compile 'org.influxdb:influxdb-java:2.15'
+    testCompile "org.apache.flink:flink-test-utils_2.11:${flinkVersion}"
+}
+
+jar {
+    zip64 true
+    manifest {
+        attributes "Main-Class": mainClassName
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+shadowJar {
+    dependencies {
+        exclude(dependency("org.scala-lang:scala-library"))
+        exclude(dependency("org.scala-lang:scala-reflect"))
+        exclude(dependency("org.scala-lang:scala-compiler"))
+    }
+
+    relocate "com.fasterxml", "com.dell.nautilus.analytics.shaded.com.fasterxml"
+    relocate "com.google", "com.dell.nautilus.analytics.shaded.com.google"
+    relocate "io.netty", "com.dell.nautilus.analytics.shaded.io.netty"
+
+    classifier = ""
+    zip64 true
+}
+
+distributions {
+    main {
+        baseName = archivesBaseName
+        contents {
+            into("lib") {
+                from shadowJar
+                from(project.configurations.shadow)
+            }
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            credentials {
+                username "nautilus"
+                password "password"
+            }
+            url = "http://localhost:9091/maven2"
+        }
+    }
+
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+        }
+    }
+}
+
+

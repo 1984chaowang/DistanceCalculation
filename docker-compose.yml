@@ -1,0 +1,44 @@
+version: "3.3"
+services:
+  #pravegagw:
+    #build: ./PravegaGateway
+    #environment:
+      #PRAVEGA_CONTROLLER: tcp://127.0.0.1:9090
+      #PRAVEGA_SCOPE: Demo
+      #PRAVEGA_STREAM: test
+      #ROUTING_KEY_ATTRIBUTE_NAME: sensor1
+      #Set two ENV variables if using Nautilus 
+      #pravega_client_auth_method: Bearer
+      #pravega_client_auth_loadDynamic: true
+    #ports:
+    #  - 9090:9090
+  influxDB:
+    image: docker.io/influxdb:latest
+    ports:
+      - 8083:8083
+      - 8086:8086
+    volumes:
+      - ./data:/var/lib/influxdb
+    restart: always
+    environment:
+      INFLUXDB_DB: demo
+      INFLUXDB_HOST: influxdb
+      INFLUXDB_PASSWORD: root
+      INFLUXDB_USERNAME: root
+  grafana:
+    image: docker.io/grafana/grafana:latest
+    restart: always
+    container_name: "grafana"
+    ports:
+      - 3000:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: password
+    volumes:
+      - ./Visualization/Config/grafana-dashboard-provider.yaml:/etc/grafana/provisioning/dashboards/grafana-dashboard-provider.yaml
+      - ./Visualization/Config/influxdb-datasource.yaml:/etc/grafana/provisioning/datasources/influxdb-datasource.yaml
+      - ./Visualization/Config/dashboard.json:/var/lib/grafana/dashboards/dashboard.json      
+    links:
+      - influxDB
+    depends_on:
+      - influxDB
