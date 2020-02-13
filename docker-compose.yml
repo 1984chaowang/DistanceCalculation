@@ -1,17 +1,26 @@
 version: "3.3"
 services:
-  #pravegagw:
-    #build: ./PravegaGateway
-    #environment:
-      #PRAVEGA_CONTROLLER: tcp://127.0.0.1:9090
-      #PRAVEGA_SCOPE: Demo
-      #PRAVEGA_STREAM: test
-      #ROUTING_KEY_ATTRIBUTE_NAME: sensor1
+  mqtt:
+    image: docker.io/eclipse-mosquitto:latest
+    ports:
+      - 1883:1883
+      - 9001:9001
+  pravegagw:
+    build: ./PravegaGateway
+    environment:
+      PRAVEGA_CONTROLLER: tcp://127.0.0.1:9090
+      PRAVEGA_SCOPE: Demo
+      PRAVEGA_STREAM: test
+      ROUTING_KEY_ATTRIBUTE_NAME: sensor1
+      MQTT_BROKER_URL: tcp://192.168.188.130:1883
+      MQTT_TOPIC: text
       #Set two ENV variables if using Nautilus 
       #pravega_client_auth_method: Bearer
       #pravega_client_auth_loadDynamic: true
-    #ports:
-    #  - 9090:9090
+    ports:
+      - 9090:9090
+    depends_on:
+      - mqtt
   influxDB:
     image: docker.io/influxdb:latest
     ports:

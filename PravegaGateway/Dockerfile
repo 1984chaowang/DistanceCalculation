@@ -8,7 +8,6 @@ COPY --chown=gradle:gradle src /home/gradle/PravegaGateway/src
 COPY --chown=gradle:gradle lib /home/gradle/PravegaGateway/lib
 
 WORKDIR /home/gradle/PravegaGateway
-RUN ls -R
 ENV GRADLE_USER_HOME=/home/gradle/PravegaGateway
 RUN gradle --no-daemon installDist --info --stacktrace
 
