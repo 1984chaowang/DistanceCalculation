@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 3,
+  "id": 1,
   "links": [],
   "panels": [
     {
@@ -101,6 +101,8 @@
           "measurement": "3",
           "orderByTime": "ASC",
           "policy": "autogen",
+          "query": "SELECT \"TREND\" FROM \"autogen\".\"3\" WHERE $timeFilter tz('Asia/Shanghai')",
+          "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -188,6 +190,8 @@
           "measurement": "3",
           "orderByTime": "ASC",
           "policy": "autogen",
+          "query": "SELECT \"AVERAGE\" FROM \"autogen\".\"3\" WHERE $timeFilter tz('Asia/Shanghai')",
+          "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
           "select": [
@@ -245,16 +249,16 @@
       }
     }
   ],
-  "refresh": "5s",
-  "schemaVersion": 21,
+  "refresh": false,
+  "schemaVersion": 22,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "2020-02-16T02:36:00.000Z",
-    "to": "2020-02-16T02:40:00.000Z"
+    "from": "now-5m",
+    "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
@@ -270,8 +274,8 @@
       "1d"
     ]
   },
-  "timezone": "",
+  "timezone": "browser",
   "title": "Distance",
   "uid": "7jAI6_-Wk",
-  "version": 14
+  "version": 1
 }

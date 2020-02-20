@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RawSenorData implements Serializable {
@@ -19,7 +20,10 @@ public class RawSenorData implements Serializable {
     }
 
     public String getId() {return id;}
-    public Double getValue() {return value;}
+    public Double getValue() {
+        if (value == null) {
+            return 0.0;
+        }return value;}
     public long getTimestamp() {
         long t = timeTomMllisecond(time);
         return (t);
@@ -27,6 +31,7 @@ public class RawSenorData implements Serializable {
 
     public static Long timeTomMllisecond(String time){
         SimpleDateFormat sdf=new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        sdf.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
         long aftertime=0;
         try {
             Object d1= sdf.parse(time).getTime();

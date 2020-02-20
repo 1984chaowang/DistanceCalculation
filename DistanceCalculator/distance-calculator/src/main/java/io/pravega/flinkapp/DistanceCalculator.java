@@ -5,10 +5,7 @@ import io.pravega.client.stream.Stream;
 import io.pravega.connectors.flink.FlinkPravegaReader;
 import io.pravega.connectors.flink.PravegaConfig;
 import org.apache.flink.api.common.functions.AggregateFunction;
-import org.apache.flink.api.common.state.ValueState;
-import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -18,13 +15,11 @@ import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.triggers.EventTimeTrigger;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 
 import org.apache.flink.util.Collector;
 import org.apache.flink.api.java.utils.ParameterTool;
 
-import java.awt.*;
 import java.net.URI;
 
 public class DistanceCalculator {
@@ -53,6 +48,7 @@ public class DistanceCalculator {
         PravegaConfig pravegaConfig = PravegaConfig.fromParams(params)
                 .withControllerURI(controllerURI)
                 .withDefaultScope(scope)
+                //Enable it if with Nautilus
                 //.withCredentials(credentials)
                 .withHostnameValidation(false);
 
@@ -65,10 +61,12 @@ public class DistanceCalculator {
         System.out.println("==============  stream  =============== "+stream);
 
         // initialize the Flink execution environment
-        //final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+        // Using EventTime in Flink runtime
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+
+        // Using ProcessingTime in Flink runtime
         //env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
 
         // create the Pravega source to read a stream of text
@@ -101,16 +99,12 @@ public class DistanceCalculator {
                         }
                 )
                 .window(TumblingEventTimeWindows.of(Time.milliseconds(3000)))
-                //.timeWindow(Time.milliseconds(3000))
-                //.aggregate(new MyAgg())
-                //.process(new MyProcessWindowFunction());
-                //.trigger(EventTimeTrigger.create())
                 .aggregate(new MyAgg(), new MyPro());
 
         // create an output sink to print to stdout for verification
         dataStream.print();
         // create an sink to InfluxDB
-        dataStream.addSink(new InfluxdbSink());
+        dataStream.addSink(new InfluxdbSink(influxdbUrl, influxdbUsername, influxdbPassword, influxdbDbName));
         // execute within the Flink environment
         env.execute("DistanceCalculator");
     }
@@ -126,8 +120,8 @@ public class DistanceCalculator {
         public long extractTimestamp(RawSenorData element, long previousElementTimestamp) {
             long timestamp = element.getTimestamp();
             currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
-            System.out.println("timestamp: " + Utils.timeformat(timestamp) + "|" + timestamp);
-            System.out.println("previousElementTimestamp: " + previousElementTimestamp);
+            //System.out.println("timestamp: " + Utils.timeformat(timestamp) + "|" + timestamp);
+            //System.out.println("previousElementTimestamp: " + previousElementTimestamp);
             System.out.println("currentMaxTimestamp: " + Utils.timeformat(currentMaxTimestamp) + "|" + currentMaxTimestamp);
             return timestamp;
         }
@@ -136,7 +130,6 @@ public class DistanceCalculator {
         public Watermark getCurrentWatermark() {
             // return the watermark as current highest timestamp minus the out-of-orderness bound
             Watermark a = new Watermark(currentMaxTimestamp - maxOutOfOrderness);
-            //System.out.println("gap: " + (currentMaxTimestamp - maxOutOfOrderness));
             System.out.println("Watermark: " + a.toString());
             return a;
         }
@@ -162,15 +155,21 @@ public class DistanceCalculator {
     }
 
     public static class AverageAccumulator{
-        public int count = 0;
-        public Double sum = 0.0;
-   }
+        int count;
+        Double sum;
+
+        public AverageAccumulator() {}
+        public AverageAccumulator(int count, Double sum) {
+            this.count = count;
+            this.sum = sum;
+        }
+    }
 
     private static class MyAgg implements AggregateFunction<RawSenorData, AverageAccumulator, Double> {
 
         @Override
         public AverageAccumulator createAccumulator() {
-            return new AverageAccumulator();
+            return new AverageAccumulator(0, 0.0);
         }
 
         @Override
@@ -184,12 +183,12 @@ public class DistanceCalculator {
         public AverageAccumulator add(RawSenorData value, AverageAccumulator acc) {
             acc.count ++;
             acc.sum += value.getValue();
+            System.out.println("count: " + acc.count + "sum: " + acc.sum);
             return acc;
         }
 
         @Override
         public Double getResult(AverageAccumulator acc) {
-            System.out.println("result: " + (acc.sum / (double) acc.count));
             return acc.sum / (double) acc.count;
         }
     }
