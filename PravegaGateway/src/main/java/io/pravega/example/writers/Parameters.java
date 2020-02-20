@@ -25,10 +25,10 @@ public class Parameters {
         return getEnvVar("ROUTING_KEY_ATTRIBUTE_NAME", "remote_addr");
     }
     public static  String getBrokerUrl() {
-        return getEnvVar("BROKER_URL", "tcp://10.37.1.207:1883");
+        return getEnvVar("MQTT_BROKER_URL", "tcp://10.37.1.207:1883");
     }
     public static  String getTopic() {
-        return getEnvVar("FIDELITY_ADS_TOPIC", "FIDELITY.ADS");
+        return getEnvVar("MQTT_TOPIC", "FIDELITY.ADS");
     }
 
     private static String getEnvVar(String name, String defaultValue) {

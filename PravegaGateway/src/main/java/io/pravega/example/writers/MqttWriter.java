@@ -24,31 +24,37 @@ public class MqttWriter {
             String scope = Parameters.getScope();
             String streamName = Parameters.getStreamName();
             String routingKey = Parameters.getRoutingKeyAttributeName();
-            String BROKER_URL = Parameters.getBrokerUrl();
-            String FIDELITY_ADS_TOPIC = Parameters.getTopic();
+            String MQTT_BROKER_URL = Parameters.getBrokerUrl();
+            String MQTT_TOPIC = Parameters.getTopic();
 
             System.out.println("Connecting to Broker1 using MQTT");
-            System.out.println("BROKER_URL: " + BROKER_URL);
-            System.out.println("FIDELITY_ADS_TOPIC: " + FIDELITY_ADS_TOPIC);
+            System.out.println("MQTT_BROKER_URL: " + MQTT_BROKER_URL);
+            System.out.println("MQTT_TOPIC: " + MQTT_TOPIC);
             MQTT mqtt = new MQTT();
-            mqtt.setHost(BROKER_URL);
+            mqtt.setHost(MQTT_BROKER_URL);
             mqtt.setClientId("mqtt001");
             mqtt.setCleanSession(false);
             BlockingConnection connection = mqtt.blockingConnection();
             connection.connect();
-            System.out.println("Connected to Artemis");
+            System.out.println("Connected to MQTT blocker " + MQTT_BROKER_URL);
 
-            // Subscribe to  fidelityAds topic
-            Topic[] topics = {new Topic(FIDELITY_ADS_TOPIC, QoS.EXACTLY_ONCE)};
+            // Subscribe to  MQTT topic
+            Topic[] topics = {new Topic(MQTT_TOPIC, QoS.AT_LEAST_ONCE)};
             connection.subscribe(topics);
 
+            if (Parameters.isPravegaStandalone()) {
+                try {Utils.createStream(scope, streamName,controllerURI);}
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
             ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
             EventStreamWriter<JsonNode> writer = clientFactory.createEventWriter(streamName,
                     new JsonNodeSerializer(),
                     EventWriterConfig.builder().build());
                 while(true) {
-                    Message record = connection.receive(5, TimeUnit.SECONDS);
+                    Message record = connection.receive(1, TimeUnit.SECONDS);
                     if (record != null) {
                         record.ack();
                         String message = new String(record.getPayload());
@@ -56,7 +62,7 @@ public class MqttWriter {
                         // Deserialize the JSON message.
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode tree = objectMapper.readTree(message);
-                        writer.writeEvent(routingKey, tree);
+                        try {writer.writeEvent(routingKey, tree); } catch (Exception e) {e.printStackTrace();}
                     }
                 }
             }

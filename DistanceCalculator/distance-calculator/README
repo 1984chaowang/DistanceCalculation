@@ -1,0 +1,7 @@
+flink app
+
+arguments:
+
+--scope, default is "examples"
+--stream", default is "example-data"
+--pravega.uri, default is "tcp://localhost:9090"

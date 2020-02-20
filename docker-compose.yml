@@ -1,0 +1,70 @@
+version: "3.3"
+services:
+  mqtt:
+    image: docker.io/eclipse-mosquitto:latest
+    restart: always
+    ports:
+      - 1883:1883
+      - 9001:9001
+  pravega:
+    image: pravega/pravega:latest
+    environment:
+      HOST_IP: 192.168.188.130
+    ports:
+      - 9090:9090
+      - 9091:9091
+      - 12345:12345
+    command: standalone
+  #If using Raspberry Pi to collect the data in real time, please comment out the service "mqttwriter".
+  mqttwriter:
+    build: ./MqttWriter
+    environment:
+      MQTT_BROKER_URL: tcp://192.168.188.130:1883
+      MQTT_TOPIC: test
+    depends_on:
+      - pravegagw
+  pravegagw:
+    build: ./PravegaGateway
+    environment:
+      PRAVEGA_CONTROLLER: tcp://192.168.188.130:9090
+      PRAVEGA_SCOPE: Demo
+      PRAVEGA_STREAM: test
+      PRAVEGA_STANDALONE: "true"
+      ROUTING_KEY_ATTRIBUTE_NAME: sensor1
+      MQTT_BROKER_URL: tcp://192.168.188.130:1883
+      MQTT_TOPIC: test
+      #Set two ENV variables if using Nautilus 
+      #pravega_client_auth_method: Bearer
+      #pravega_client_auth_loadDynamic: true
+    depends_on:
+      - pravega
+      - mqtt
+  influxDB:
+    image: docker.io/influxdb:latest
+    ports:
+      - 8083:8083
+      - 8086:8086
+    #volumes:
+    #  - ./data:/var/lib/influxdb
+    restart: always
+    environment:
+      INFLUXDB_DB: demo
+      INFLUXDB_HOST: influxdb
+      INFLUXDB_PASSWORD: root
+      INFLUXDB_USERNAME: root
+  grafana:
+    image: docker.io/grafana/grafana:latest
+    restart: always
+    ports:
+      - 3000:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: password
+    volumes:
+      - ./Visualization/Config/grafana-dashboard-provider.yaml:/etc/grafana/provisioning/dashboards/grafana-dashboard-provider.yaml
+      - ./Visualization/Config/influxdb-datasource.yaml:/etc/grafana/provisioning/datasources/influxdb-datasource.yaml
+      - ./Visualization/Config/dashboard.json:/var/lib/grafana/dashboards/dashboard.json      
+    links:
+      - influxDB
+    depends_on:
+      - influxDB

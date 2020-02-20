@@ -1,0 +1,64 @@
+plugins {
+    id 'java'
+}
+
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "application"
+
+group 'io.pravega.inject'
+
+version = 1.0
+archivesBaseName = "mqtt-writer"
+description = "mqtt-writer"
+mainClassName = "io.pravega.inject.mqttwriter"
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+         url "https://repository.apache.org/snapshots"
+            }
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    maven {
+        url "https://oss.jfrog.org/jfrog-dependencies"
+    }
+}
+
+dependencies {
+    // Note that we must include the Elasticsearch client early in the classpath to avoid Netty version conflicts.
+    compile "org.apache.flink:flink-streaming-java_2.11:${flinkVersion}"
+    compile "org.apache.flink:flink-streaming-scala_2.11:${flinkVersion}"
+
+    // common-library dependencies
+    compile "com.google.guava:guava:20.0"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.1"
+    compile group: 'org.fusesource.mqtt-client', name: 'mqtt-client', version: '1.14'
+	
+    testCompile "org.apache.flink:flink-test-utils_2.11:${flinkVersion}"
+}
+
+task startJSONReader(type: JavaExec) {
+    main = "io.pravega.inject.mqttwriter"
+    classpath = sourceSets.main.runtimeClasspath
+    if(System.getProperty("exec.args") != null) {
+        args System.getProperty("exec.args").split()
+    }
+}
+
+jar {
+    zip64 true
+    manifest {
+        attributes "Main-Class": mainClassName
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
