@@ -2,11 +2,11 @@ package io.pravega.flinkapp;
 
 import java.io.Serializable;
 
-public class OutSenorData {
+public class OutSenorData implements Serializable {
     public long timestamp;
     public String sensorid;
     public Double difference;
-    int trend;
+    public int trend;
     public Double average;
 
     public OutSenorData() {

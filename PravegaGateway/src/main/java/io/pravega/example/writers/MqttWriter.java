@@ -42,13 +42,19 @@ public class MqttWriter {
             Topic[] topics = {new Topic(MQTT_TOPIC, QoS.AT_LEAST_ONCE)};
             connection.subscribe(topics);
 
+            if (Parameters.isPravegaStandalone()) {
+                try {Utils.createStream(scope, streamName,controllerURI);}
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
             ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
             EventStreamWriter<JsonNode> writer = clientFactory.createEventWriter(streamName,
                     new JsonNodeSerializer(),
                     EventWriterConfig.builder().build());
                 while(true) {
-                    Message record = connection.receive(5, TimeUnit.SECONDS);
+                    Message record = connection.receive(1, TimeUnit.SECONDS);
                     if (record != null) {
                         record.ack();
                         String message = new String(record.getPayload());
@@ -56,7 +62,7 @@ public class MqttWriter {
                         // Deserialize the JSON message.
                         ObjectMapper objectMapper = new ObjectMapper();
                         JsonNode tree = objectMapper.readTree(message);
-                        writer.writeEvent(routingKey, tree);
+                        try {writer.writeEvent(routingKey, tree); } catch (Exception e) {e.printStackTrace();}
                     }
                 }
             }

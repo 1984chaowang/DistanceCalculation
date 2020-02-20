@@ -5,7 +5,6 @@ import io.pravega.client.stream.Stream;
 import io.pravega.connectors.flink.FlinkPravegaReader;
 import io.pravega.connectors.flink.PravegaConfig;
 import org.apache.flink.api.common.functions.AggregateFunction;
-import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -13,30 +12,45 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.triggers.EventTimeTrigger;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 
 import org.apache.flink.util.Collector;
 import org.apache.flink.api.java.utils.ParameterTool;
 
+import java.awt.*;
 import java.net.URI;
-import java.text.DecimalFormat;
 
 public class DistanceCalculator {
 
     public static void main(String[] args) throws Exception{
 
         ParameterTool params = ParameterTool.fromArgs(args);
-
-        final String scope = params.get("scope", "examples");
-        final String streamName = params.get("stream", "example-data");
-        final URI controllerURI = URI.create(params.get("pravega.uri", "tcp://127.0.0.1:9090"));
-
         // initialize the parameter utility tool in order to retrieve input parameters
-        PravegaConfig pravegaConfig = PravegaConfig.fromDefaults()
+        final String scope = params.get("pravega_scope", "examples");
+        final String streamName = params.get("pravega_stream", "example-data");
+        final URI controllerURI = URI.create(params.get("pravega_controller_uri", "tcp://127.0.0.1:9090"));
+        final String influxdbUrl = String.valueOf(URI.create(params.get("influxdb_url", "http://127.0.0.1:8086")));
+        final String influxdbUsername = params.get("influxdb_username", "root");
+        final String influxdbPassword = params.get("influxdb_password", "root");
+        final String influxdbDbName = params.get("influxdb_DbName", "demo");
+        System.out.println("pravega_controller_uri:" + controllerURI );
+        System.out.println("pravega_scope:" + scope );
+        System.out.println("pravega_stream:" + streamName );
+        System.out.println("influxdb_url:" + influxdbUrl );
+        System.out.println("influxdb_username:" + influxdbUsername );
+        System.out.println("influxdb_password:" + influxdbPassword );
+        System.out.println("influxdb_DbName:" + influxdbDbName );
+
+
+        //PravegaConfig pravegaConfig = PravegaConfig.fromDefaults()
+        PravegaConfig pravegaConfig = PravegaConfig.fromParams(params)
                 .withControllerURI(controllerURI)
                 .withDefaultScope(scope)
                 //.withCredentials(credentials)
@@ -51,9 +65,12 @@ public class DistanceCalculator {
         System.out.println("==============  stream  =============== "+stream);
 
         // initialize the Flink execution environment
+        //final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+        //env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
+
         // create the Pravega source to read a stream of text
         FlinkPravegaReader<RawSenorData> source = FlinkPravegaReader.<RawSenorData>builder()
                 .withPravegaConfig(pravegaConfig)
@@ -65,29 +82,43 @@ public class DistanceCalculator {
         DataStream<OutSenorData> dataStream = env.addSource(source).name(streamName)
                 //.flatMap(new DataAnalyzer.Splitter())
                 //.flatMap(new Splitter())
+                /*.assignTimestampsAndWatermarks(
+                        new BoundedOutOfOrdernessTimestampExtractor<RawSenorData>(Time.milliseconds(1000)) {
+                         @Override
+                        public long extractTimestamp(RawSenorData element) {
+                             Utils.timeformat(element.getTimestamp());
+                             return element.getTimestamp();
+                         }
+                })*/
+                .setParallelism(1)
                 .assignTimestampsAndWatermarks(new MyAssignTime())
                 .keyBy(
                         new KeySelector<RawSenorData, String>() {
                             @Override
                             public String getKey(RawSenorData d) throws Exception {
-                                return d.id;
+                                return d.getId();
                             }
                         }
                 )
-                .timeWindow(Time.milliseconds(3000))
+                .window(TumblingEventTimeWindows.of(Time.milliseconds(3000)))
+                //.timeWindow(Time.milliseconds(3000))
+                //.aggregate(new MyAgg())
+                //.process(new MyProcessWindowFunction());
+                //.trigger(EventTimeTrigger.create())
                 .aggregate(new MyAgg(), new MyPro());
 
         // create an output sink to print to stdout for verification
         dataStream.print();
+        // create an sink to InfluxDB
         dataStream.addSink(new InfluxdbSink());
         // execute within the Flink environment
-        env.execute("DataAnalyzer");
+        env.execute("DistanceCalculator");
     }
 
 
-    private static class MyAssignTime implements AssignerWithPeriodicWatermarks<RawSenorData> {
+    public static class MyAssignTime implements AssignerWithPeriodicWatermarks<RawSenorData> {
 
-        private final long maxOutOfOrderness = 1000; // 1 seconds
+        private final long maxOutOfOrderness = 2000; // 1 seconds
 
         private long currentMaxTimestamp;
 
@@ -95,65 +126,28 @@ public class DistanceCalculator {
         public long extractTimestamp(RawSenorData element, long previousElementTimestamp) {
             long timestamp = element.getTimestamp();
             currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
-            System.out.println("timestamp: " + timestamp);
-            System.out.println("currentMaxTimestamp: " + currentMaxTimestamp);
+            System.out.println("timestamp: " + Utils.timeformat(timestamp) + "|" + timestamp);
+            System.out.println("previousElementTimestamp: " + previousElementTimestamp);
+            System.out.println("currentMaxTimestamp: " + Utils.timeformat(currentMaxTimestamp) + "|" + currentMaxTimestamp);
             return timestamp;
         }
 
         @Override
         public Watermark getCurrentWatermark() {
             // return the watermark as current highest timestamp minus the out-of-orderness bound
-            return new Watermark(currentMaxTimestamp - maxOutOfOrderness);
+            Watermark a = new Watermark(currentMaxTimestamp - maxOutOfOrderness);
+            //System.out.println("gap: " + (currentMaxTimestamp - maxOutOfOrderness));
+            System.out.println("Watermark: " + a.toString());
+            return a;
         }
     }
 
     private static class MyPro extends ProcessWindowFunction<Double, OutSenorData, String, TimeWindow> {
-        private ValueState<Double> last;
-        private ValueState<Double> lastlast;
 
-        @Override
-        public void open(Configuration config) throws Exception {
-            ValueStateDescriptor<Double> descriptor = new ValueStateDescriptor<>("saved last", Double.class);
-            last = getRuntimeContext().getState(descriptor);
-            ValueStateDescriptor<Double> ldescriptor = new ValueStateDescriptor<>("saved last last", Double.class);
-            lastlast = getRuntimeContext().getState(ldescriptor);
-        }
-
-/*        @Override
-        public void process(String key, Context context, Iterable<Double> elements, Collector<OutSenorData> out) throws Exception {
+         public void process(String key, Context context, Iterable<Double> elements, Collector<OutSenorData> out) throws Exception {
            for (Double d: elements) {
                 int trend = 0;
-                Double diff = last.value() == null ? 0.0 : d - last.value();
-                Double lastdiff = lastlast.value() == null ? 0.0 : last.value() - lastlast.value();
-                if (diff > 100.0) {
-                    if (lastdiff > 100.0) {
-                        trend = 3;
-                    } else {
-                        trend = 1;
-                    }
-                } else  if (diff < -100.0) {
-                    if (lastdiff < -100.0) {
-                        trend = 4;
-                    } else {
-                        trend = 2;
-                    }
-                } else if ((diff <= 100.0) && (diff >= -100.0)) {
-                    trend = 0;
-                }
-                out.collect(new OutSenorData(context.window().getEnd(), key, diff, trend, d));
-                lastlast.update(last.value());
-                last.update(d);
-            }
-        }
-    }
-*/
-
-        @Override
-        public void process(String key, Context context, Iterable<Double> elements, Collector<OutSenorData> out) throws Exception {
-           for (Double d: elements) {
-                int trend = 0;
-                Double diff = last.value() == null ? 0.0 : d - last.value();
-                Double lastdiff = lastlast.value() == null ? 0.0 : last.value() - lastlast.value();
+                Double diff = 0.0;
                 //Trend Meaning:
                 // 0: Normal, 2: A little Far, 3: Far
                 if (d > 1 && d <= 3)  {
@@ -163,33 +157,20 @@ public class DistanceCalculator {
                         trend = 0;
                 } else  trend = 3;
                 out.collect(new OutSenorData(context.window().getEnd(), key, diff, trend, d));
-               lastlast.update(last.value());
-               last.update(d);
-            }
+                }
         }
     }
+
+    public static class AverageAccumulator{
+        public int count = 0;
+        public Double sum = 0.0;
+   }
 
     private static class MyAgg implements AggregateFunction<RawSenorData, AverageAccumulator, Double> {
 
         @Override
         public AverageAccumulator createAccumulator() {
-            return new AverageAccumulator(0, 0.0);
-        }
-
-        @Override
-        public AverageAccumulator add(RawSenorData nd, AverageAccumulator acc) {
-            acc.sum += nd.getValue();
-            acc.count++;
-            System.out.println(acc.sum  + "ddd");
-            return acc;
-        }
-
-        @Override
-        public Double getResult(AverageAccumulator acc) {
-
-            String test = "";
-            test =  new DecimalFormat("0.00").format(acc.sum / acc.count);
-            return Double.valueOf(test);
+            return new AverageAccumulator();
         }
 
         @Override
@@ -198,17 +179,20 @@ public class DistanceCalculator {
             a.sum += b.sum;
             return a;
         }
-    }
 
-    public static class AverageAccumulator{
-        int count;
-        Double sum;
+        @Override
+        public AverageAccumulator add(RawSenorData value, AverageAccumulator acc) {
+            acc.count ++;
+            acc.sum += value.getValue();
+            return acc;
+        }
 
-        public AverageAccumulator() {}
-        public AverageAccumulator(int count, Double sum) {
-            this.count = count;
-            this.sum = sum;
+        @Override
+        public Double getResult(AverageAccumulator acc) {
+            System.out.println("result: " + (acc.sum / (double) acc.count));
+            return acc.sum / (double) acc.count;
         }
     }
 
 }
+

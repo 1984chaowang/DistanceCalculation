@@ -8,8 +8,6 @@
  * in the user guide at https://docs.gradle.org/3.4.1/userguide/multi_project_builds.html
  */
 
-rootProject.name = "distance-calculator"
-
+rootProject.name = "DistanceCalculator"
 include "distance-calculator"
-rootProject.name = 'distance-calculator'
 

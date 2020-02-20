@@ -22,12 +22,13 @@ public class Utils {
         //System.out.println(clientConfig);
 	try(StreamManager streamManager = StreamManager.create(clientConfig);)
         {
-            //System.out.println("CREATE STREAM MANAGER");
+           //System.out.println("CREATE STREAM MANAGER");
 	    if (Parameters.isPravegaStandalone()) {
                 streamManager.createScope(scope);
+                System.out.println("DONE: " + scope + "has been created");
             }
             result = streamManager.createStream(scope, streamName, StreamConfiguration.builder().build());
-	    //System.out.println("DONE:");
+	        System.out.println("DONE: " + scope +"/" + streamName + "has been created");
         }
         catch (Exception e) {
             e.printStackTrace();

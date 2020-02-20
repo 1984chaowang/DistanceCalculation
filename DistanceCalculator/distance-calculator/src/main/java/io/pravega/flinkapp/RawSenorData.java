@@ -5,8 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RawSenorData implements Serializable {
@@ -23,14 +21,12 @@ public class RawSenorData implements Serializable {
     public String getId() {return id;}
     public Double getValue() {return value;}
     public long getTimestamp() {
-        long t = timeToHour(time);
+        long t = timeTomMllisecond(time);
         return (t);
     }
 
-    public static Long timeToHour(String time){
-        Locale currentLocale = new Locale("zh", "CN");;
-        SimpleDateFormat sdf=new SimpleDateFormat("MM/dd/yyyy HH:mm:ss", currentLocale);
-        System.out.println("sdf: " + sdf);
+    public static Long timeTomMllisecond(String time){
+        SimpleDateFormat sdf=new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
         long aftertime=0;
         try {
             Object d1= sdf.parse(time).getTime();
@@ -40,14 +36,11 @@ public class RawSenorData implements Serializable {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
         return aftertime;
 
     }
 
     @Override
-    public String toString() {
-        return "id: "+ id + ": " + " time: " + time + " value: " + value;
-    }
+    public String toString() {return "id: "+ id + ": " + " time: " + time + " value: " + value;}
 }
 

@@ -253,8 +253,8 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
-    "to": "now"
+    "from": "2020-02-16T02:36:00.000Z",
+    "to": "2020-02-16T02:40:00.000Z"
   },
   "timepicker": {
     "refresh_intervals": [

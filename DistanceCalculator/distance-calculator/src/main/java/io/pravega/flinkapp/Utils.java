@@ -14,8 +14,11 @@ import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.connectors.flink.PravegaConfig;
+import scala.collection.$colon$plus;
 
 import java.net.URI;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 public class Utils {
     /**
@@ -42,11 +45,19 @@ public class Utils {
         try(StreamManager streamManager = StreamManager.create(pravegaConfig.getClientConfig())) {
             // create the requested scope (if necessary)
             //streamManager.createScope(stream.getScope());
-
+            System.out.println(stream.getScope() + stream.getStreamName());
             // create the requested stream based on the given stream configuration
             streamManager.createStream(stream.getScope(), stream.getStreamName(), streamConfig);
         }
 
         return stream;
+    }
+
+    public static String timeformat(long IN) {
+        String OUT = "";
+        SimpleDateFormat sdf=new SimpleDateFormat("MM/dd/yyyy HH:mm:ss:SS");
+        OUT = sdf.format(IN);
+        System.out.println("OUT: " + OUT);
+        return OUT;
     }
 }
