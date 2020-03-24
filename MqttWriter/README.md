@@ -6,7 +6,7 @@ You can either deploy it via docker or run in your IDE, some env variables shall
 
 
 **options:**
-*MQTT_BROKER_UR*L, the MQTT broker url, the default setting is "tcp://127.0.0.1:1883";
+_MQTT_BROKER_URL_, the MQTT broker url, the default setting is "tcp://127.0.0.1:1883";
 
 _MQTT_TOPIC_, the MQTT topic where you are going to read the data from, the default setting is "test";
 
