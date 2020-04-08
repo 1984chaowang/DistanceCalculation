@@ -1,8 +1,10 @@
 package io.pravega.example.writers;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.fusesource.mqtt.client.BlockingConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.Message;
@@ -53,19 +55,21 @@ public class MqttWriter {
             EventStreamWriter<JsonNode> writer = clientFactory.createEventWriter(streamName,
                     new JsonNodeSerializer(),
                     EventWriterConfig.builder().build());
-                while(true) {
-                    Message record = connection.receive(1, TimeUnit.SECONDS);
-                    if (record != null) {
-                        record.ack();
-                        String message = new String(record.getPayload());
-                        System.out.println("Writing message: " + message + " with routing-key: " + routingKey + " to stream " + scope + "/" + streamName);
-                        // Deserialize the JSON message.
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        JsonNode tree = objectMapper.readTree(message);
-                        try {writer.writeEvent(routingKey, tree); } catch (Exception e) {e.printStackTrace();}
-                    }
+
+            while(true) {
+                Message record = connection.receive(1, TimeUnit.SECONDS);
+                if (record != null) {
+                    record.ack();
+                    String message = new String(record.getPayload());
+
+                    // Deserialize the JSON message.
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    JsonNode element = objectMapper.readTree(message);
+                    System.out.println("Writing message: " + element.toString() + " with routing-key: " + routingKey + " to stream " + scope + "/" + streamName);
+                    writer.writeEvent(routingKey, element);
                 }
             }
+        }
         catch (Exception e) {
             e.printStackTrace();
         }
