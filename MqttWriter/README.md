@@ -1,12 +1,16 @@
-# PravegaGateway
-Data Ingestion into pravega through socket as gateway.
+# MQTTWriter
+A toolkit as a simulator to write the data into MQTT and later be consumed by the GW which reads the data into Pravega, it keeps running until you stop this toolkit.
 
-Message should be sent to socket line by line and string "FINISH" will be deemed as signal of ending the communication and will close the gateway
 
-options:
+You can either deploy it via docker or run in your IDE, some env variables shall be stated.
 
--s "scope": The scope name of the stream to read from. default is "demo" if not specified
--n "name": The name of the stream to read from. default is "demoStream" if not specified
--u "uri": The URI to the controller in the form "tcp://host:port". default is "tcp://127.0.0.1:9090" if not specified
--r "routingKey": The routing key of the message to write. default is "demoRoutingKey" if not specified
+
+**options:**
+
+_MQTT_BROKER_URL_, the MQTT broker url, the default setting is "tcp://127.0.0.1:1883";
+
+_MQTT_TOPIC_, the MQTT topic where you are going to read the data from, the default setting is "test";
+
+_MQTT_DATA_FILE_, the data you are going to inject into MQTT, the default setting i "Distance.csv".
+
 
