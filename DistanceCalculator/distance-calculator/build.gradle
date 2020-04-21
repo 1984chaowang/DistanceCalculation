@@ -42,14 +42,32 @@ repositories {
 }
 
 dependencies {
-    // Note that we must include the Elasticsearch client early in the classpath to avoid Netty version conflicts.
-    compile "io.pravega:pravega-connectors-flink_2.12:${pravegaFlinkConnectorVersion}"
-    compile "org.apache.flink:flink-streaming-java_2.11:${flinkVersion}"
-    compile "org.apache.flink:flink-streaming-scala_2.11:${flinkVersion}"
-    compile "org.apache.flink:flink-ml_2.11:${flinkVersion}"
+   //Flink dependencies
+    compile "org.apache.flink:flink-streaming-java_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-streaming-scala_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-clients_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-scala-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-java-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-scala-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-planner_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-planner-blink_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-streaming-scala_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-common:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-java-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-json:${flinkVersion}"
+    compile "org.apache.flink:flink-table:${flinkVersion}"
+
+    //Pravega dependencies
+    compile "io.pravega:pravega-connectors-flink-${flinkShortVersion}_${flinkPravegaScalaVersion}:${pravegaFlinkConnectorVersion}"
     compile "io.pravega:pravega-client:${pravegaVersion}"
+    if (includePravegaCredentials.toBoolean()) {
+        compile "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
+    }
 
     // common-library dependencies
+    compile "org.slf4j:slf4j-api:${slf4jApiVersion}"
+    compile "ch.qos.logback:logback-classic:${logbackVersion}"
+    compile "ch.qos.logback:logback-core:${logbackVersion}"
     compile "com.google.guava:guava:20.0"
     compile 'org.mongodb:mongo-java-driver:3.10.2'
     compile "org.xerial:sqlite-jdbc:3.20.0"
@@ -57,7 +75,7 @@ dependencies {
 
 
     compile 'org.influxdb:influxdb-java:2.15'
-    testCompile "org.apache.flink:flink-test-utils_2.11:${flinkVersion}"
+    testCompile "org.apache.flink:flink-test-utils_${flinkScalaVersion}:${flinkVersion}"
 }
 
 task startJSONReader(type: JavaExec) {
@@ -106,10 +124,10 @@ publishing {
     repositories {
         maven {
             credentials {
-                username "nautilus"
-                password "password"
+                username mavenUsername
+                password mavenPassword
             }
-            url = "http://localhost:9091/maven2"
+            url projectRepoUrl
         }
     }
 

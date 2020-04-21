@@ -25,14 +25,40 @@ repositories {
 }
 
 dependencies {
-    runtime files ('lib/pravega-keycloak-credentials-0.5.0-2306.a5a5cdf-0.11.10-002.985e705-shadow.jar')
+    //Flink dependencies
+    compile "org.apache.flink:flink-streaming-java_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-streaming-scala_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-clients_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-scala-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-java-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-scala-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-planner_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-planner-blink_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-streaming-scala_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-table-common:${flinkVersion}"
+    compile "org.apache.flink:flink-table-api-java-bridge_${flinkScalaVersion}:${flinkVersion}"
+    compile "org.apache.flink:flink-json:${flinkVersion}"
+    compile "org.apache.flink:flink-table:${flinkVersion}"
+
+    //Pravega dependencies
+    compile "io.pravega:pravega-connectors-flink-${flinkShortVersion}_${flinkPravegaScalaVersion}:${pravegaFlinkConnectorVersion}"
     compile "io.pravega:pravega-client:${pravegaVersion}"
+    if (includePravegaCredentials.toBoolean()) {
+        compile "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
+    }
 
     // common-library dependencies
+    compile "org.slf4j:slf4j-api:${slf4jApiVersion}"
+    compile "ch.qos.logback:logback-classic:${logbackVersion}"
+    compile "ch.qos.logback:logback-core:${logbackVersion}"
     compile "com.google.guava:guava:20.0"
+    compile 'org.mongodb:mongo-java-driver:3.10.2'
     compile "org.xerial:sqlite-jdbc:3.20.0"
     compile "com.fasterxml.jackson.core:jackson-databind:2.9.1"
-    compile group: 'org.fusesource.mqtt-client', name: 'mqtt-client', version: '1.14'
+
+
+    compile 'org.influxdb:influxdb-java:2.15'
+    testCompile "org.apache.flink:flink-test-utils_${flinkScalaVersion}:${flinkVersion}"
 }
 
 jar {
@@ -44,8 +70,4 @@ jar {
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
-}
-
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
 }
