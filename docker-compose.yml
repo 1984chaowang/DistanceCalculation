@@ -36,6 +36,7 @@ services:
       #Set two ENV variables if using Nautilus 
       #pravega_client_auth_method: Bearer
       #pravega_client_auth_loadDynamic: true
+      #KEYCLOAK_SERVICE_ACCOUNT_FILE: ${HOME}/keycloak.json
     depends_on:
       - pravega
       - mqtt

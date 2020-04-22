@@ -47,16 +47,9 @@ public class PravegaTableReader {
                                         new String[]{"id", "v", "q"},
                                         new TypeInformation[]{Types.STRING(), Types.DECIMAL(), Types.INT()})
                             )
-                )
-
-                ;
-
-/*        Schema schema = new Schema()
-                .field("id", Types.STRING())
-                .field("time", Types.STRING())
-                .field("value", Types.STRING()
                 );
-*/
+
+
         // set up the streaming execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);

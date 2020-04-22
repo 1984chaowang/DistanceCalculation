@@ -38,7 +38,6 @@ dependencies {
     compile "org.apache.flink:flink-table-common:${flinkVersion}"
     compile "org.apache.flink:flink-table-api-java-bridge_${flinkScalaVersion}:${flinkVersion}"
     compile "org.apache.flink:flink-json:${flinkVersion}"
-    compile "org.apache.flink:flink-table:${flinkVersion}"
 
     //Pravega dependencies
     compile "io.pravega:pravega-connectors-flink-${flinkShortVersion}_${flinkPravegaScalaVersion}:${pravegaFlinkConnectorVersion}"
