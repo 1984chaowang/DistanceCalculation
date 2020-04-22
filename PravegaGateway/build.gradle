@@ -54,6 +54,7 @@ dependencies {
     compile 'org.mongodb:mongo-java-driver:3.10.2'
     compile "org.xerial:sqlite-jdbc:3.20.0"
     compile "com.fasterxml.jackson.core:jackson-databind:2.9.1"
+    compile "org.fusesource.mqtt-client:mqtt-client:1.14"
 
 
     compile 'org.influxdb:influxdb-java:2.15'
