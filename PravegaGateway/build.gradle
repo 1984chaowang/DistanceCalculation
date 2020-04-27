@@ -6,12 +6,12 @@ apply plugin: "java"
 apply plugin: "maven"
 apply plugin: "application"
 
-group 'org.apache'
-version '1.0'
 
 sourceCompatibility = 1.8
-//mainClassName = "io.pravega.example.writers.SocketWriter"
+group = "io.pravega.example.writers"
+archivesBaseName = "PravegaGateway"
 mainClassName = "io.pravega.example.writers.MqttWriter"
+version = 1.0
 
 repositories {
     maven {
@@ -20,8 +20,10 @@ repositories {
     maven {
           url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'
     }
+    maven {
+          url 'https://oss.jfrog.org/jfrog-dependencies'
+    }
     mavenLocal()
-    mavenCentral()
 }
 
 dependencies {
@@ -41,7 +43,6 @@ dependencies {
 
     //Pravega dependencies
     compile "io.pravega:pravega-connectors-flink-${flinkShortVersion}_${flinkPravegaScalaVersion}:${pravegaFlinkConnectorVersion}"
-    compile "io.pravega:pravega-client:${pravegaVersion}"
     if (includePravegaCredentials.toBoolean()) {
         compile "io.pravega:pravega-keycloak-client:${pravegaCredentialsVersion}"
     }
@@ -51,7 +52,6 @@ dependencies {
     compile "ch.qos.logback:logback-classic:${logbackVersion}"
     compile "ch.qos.logback:logback-core:${logbackVersion}"
     compile "com.google.guava:guava:20.0"
-    compile 'org.mongodb:mongo-java-driver:3.10.2'
     compile "org.xerial:sqlite-jdbc:3.20.0"
     compile "com.fasterxml.jackson.core:jackson-databind:2.9.1"
     compile "org.fusesource.mqtt-client:mqtt-client:1.14"
@@ -61,13 +61,13 @@ dependencies {
     testCompile "org.apache.flink:flink-test-utils_${flinkScalaVersion}:${flinkVersion}"
 }
 
-jar {
-    zip64 true
-    manifest {
-        attributes "Main-Class": mainClassName
-    }
-
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+distributions {
+    main {
+        baseName = archivesBaseName
+        contents {
+            into("lib") {
+                from jar
+            }
+        }
     }
 }

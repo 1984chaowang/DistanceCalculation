@@ -6,8 +6,7 @@ apply plugin: "java"
 apply plugin: "maven"
 apply plugin: "application"
 
-group 'io.pravega.inject'
-
+group = 'io.pravega.inject'
 version = 1.0
 archivesBaseName = "mqtt-writer"
 description = "mqtt-writer"
@@ -17,17 +16,13 @@ targetCompatibility = 1.8
 
 
 repositories {
+    maven {
+        url 'https://maven.aliyun.com/nexus/content/groups/public/'
+    }
+    maven {
+        url 'https://maven.aliyun.com/nexus/content/repositories/jcenter'
+    }
     mavenLocal()
-    mavenCentral()
-    maven {
-         url "https://repository.apache.org/snapshots"
-            }
-    maven {
-        url "https://oss.sonatype.org/content/repositories/snapshots"
-    }
-    maven {
-        url "https://oss.jfrog.org/jfrog-dependencies"
-    }
 }
 
 dependencies {

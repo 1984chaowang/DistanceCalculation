@@ -8,8 +8,9 @@
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  */
+
 plugins {
-    id 'com.github.johnrengelman.shadow'
+    id 'com.github.johnrengelman.shadow' version '2.0.3'
 }
 
 apply plugin: "java"
@@ -17,15 +18,13 @@ apply plugin: "maven"
 apply plugin: "application"
 apply plugin: "maven-publish"
 
-group 'io.pravega.flinkapp'
-
+group = "io.pravega.flinkapp"
 version = 4.0
 archivesBaseName = "distance-calculator"
 description = "distance-calculator"
 mainClassName = "io.pravega.flinkapp.DistanceCalculator"
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-
 
 repositories {
     mavenLocal()
@@ -55,7 +54,6 @@ dependencies {
     compile "org.apache.flink:flink-table-common:${flinkVersion}"
     compile "org.apache.flink:flink-table-api-java-bridge_${flinkScalaVersion}:${flinkVersion}"
     compile "org.apache.flink:flink-json:${flinkVersion}"
-    compile "org.apache.flink:flink-table:${flinkVersion}"
 
     //Pravega dependencies
     compile "io.pravega:pravega-connectors-flink-${flinkShortVersion}_${flinkPravegaScalaVersion}:${pravegaFlinkConnectorVersion}"
@@ -78,25 +76,6 @@ dependencies {
     testCompile "org.apache.flink:flink-test-utils_${flinkScalaVersion}:${flinkVersion}"
 }
 
-task startJSONReader(type: JavaExec) {
-    main = "io.pravega.flinkapp.DistanceCalculator"
-    classpath = sourceSets.main.runtimeClasspath
-    if(System.getProperty("exec.args") != null) {
-        args System.getProperty("exec.args").split()
-    }
-}
-
-jar {
-    zip64 true
-    manifest {
-        attributes "Main-Class": mainClassName
-    }
-
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-}
-
 shadowJar {
     dependencies {
         exclude(dependency("org.scala-lang:scala-library"))
@@ -104,7 +83,9 @@ shadowJar {
         exclude(dependency("org.scala-lang:scala-compiler"))
     }
 
-    classifier = ""
+    relocate "com.google", "com.dell.nautilus.analytics.shaded.com.google"
+    relocate "io.netty", "com.dell.nautilus.analytics.shaded.io.netty"
+    classifier = null
     zip64 true
 }
 
@@ -124,10 +105,10 @@ publishing {
     repositories {
         maven {
             credentials {
-                username mavenUsername
-                password mavenPassword
+                username = "${mavenUsername}"
+                password = "${mavenPassword}"
             }
-            url projectRepoUrl
+            url = "${projectRepoUrl}"
         }
     }
 
