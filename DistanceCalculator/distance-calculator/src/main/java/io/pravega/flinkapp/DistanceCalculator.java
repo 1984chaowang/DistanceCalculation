@@ -72,7 +72,7 @@ public class DistanceCalculator {
         // create the Pravega source to read a stream of text
         FlinkPravegaReader<RawSenorData> source = FlinkPravegaReader.<RawSenorData>builder()
                 .withPravegaConfig(pravegaConfig)
-                .forStream(stream)
+                .forStream(stream, Utils.getStreamInfo(pravegaConfig, scope, streamName).getTailStreamCut())
                 .withDeserializationSchema(new JsonDeserializationSchema(RawSenorData.class))
                 .build();
 
@@ -143,10 +143,10 @@ public class DistanceCalculator {
                 Double diff = 0.0;
                 //Trend Meaning:
                 // 0: Normal, 2: A little Far, 3: Far
-                if (d > 1 && d <= 3)  {
+                if (d > 5 && d <= 7)  {
                         trend = 2;
                  }
-                else if (d > 0 && d <= 1 ) {
+                else if (d > 0 && d <= 5 ) {
                         trend = 0;
                 } else  trend = 3;
                 out.collect(new OutSenorData(context.window().getEnd(), key, diff, trend, d));

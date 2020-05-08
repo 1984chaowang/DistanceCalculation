@@ -10,11 +10,13 @@
  */
 package io.pravega.flinkapp;
 
+import io.pravega.client.ClientConfig;
+import io.pravega.client.admin.StreamInfo;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.stream.Stream;
 import io.pravega.client.stream.StreamConfiguration;
+import io.pravega.client.stream.StreamCut;
 import io.pravega.connectors.flink.PravegaConfig;
-import scala.collection.$colon$plus;
 
 import java.net.URI;
 import java.text.ParseException;
@@ -59,5 +61,16 @@ public class Utils {
         OUT = sdf.format(IN);
         System.out.println("OUT: " + OUT);
         return OUT;
+    }
+
+    public static StreamInfo getStreamInfo(PravegaConfig pravegaConfig, String scopename, String streamName) {
+
+        try(StreamManager streamManager = StreamManager.create(pravegaConfig.getClientConfig())) {
+            StreamInfo streaminfo = streamManager.getStreamInfo(scopename, streamName);
+            return streaminfo;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 }
