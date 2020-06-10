@@ -4,7 +4,8 @@ package io.pravega.example.writers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.pravega.client.ClientFactory;
+import io.pravega.client.ClientConfig;
+import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 
@@ -30,11 +31,11 @@ public class SocketWriter {
     }
 
     // listen to a socket
-    public void run(String routingKey) throws IOException {
+    public void run(String routingKey, ClientConfig clientConfig) throws IOException {
         String message;
         try (
-                ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
-	        EventStreamWriter<JsonNode> writer = clientFactory.createEventWriter(streamName,
+                EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+                EventStreamWriter<JsonNode> writer = clientFactory.createEventWriter(streamName,
                         new JsonNodeSerializer(),
                         EventWriterConfig.builder().build());
                 InputStream is = socket.getInputStream();
@@ -70,8 +71,9 @@ public class SocketWriter {
             // wait and listen to the data input client.
             Socket socket = ss.accept();
             SocketWriter writer = new SocketWriter(socket, scope, streamName, controllerURI);
+            ClientConfig clientConfig = ClientConfig.builder().controllerURI(controllerURI).build();
 
-            writer.run(routingKey);
+            writer.run(routingKey, clientConfig);
 
             socket.close();
             ss.close();

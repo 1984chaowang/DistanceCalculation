@@ -15,6 +15,9 @@ public class Parameters {
     public static String getStreamName() {
         return getEnvVar("PRAVEGA_STREAM", "daduriver-data");
     }
+    public static boolean isEnableTls() { return getEnvVar("PRAVEGA_ENABLE_TLS", "false").equals("true");}
+    public static String getTrustStorePath() { return getEnvVar("PRAVEGA_TLS_TRUST_STORE_PATH", "/opt/PravegaGateway/truststore/tls.crt");}
+    public static boolean isValidateHostname () { return getEnvVar("PRAVEGA_TLS_VALIDATE_HOST_NAME", "false").equals("true");}
     public static int getScaleFactor() {
         return Integer.parseInt(getEnvVar("PRAVEGA_SCALE_FACTOR", "2"));
     }

@@ -5,13 +5,17 @@ import java.util.concurrent.TimeUnit;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.pravega.client.ClientConfig;
+import io.pravega.client.EventStreamClientFactory;
+import io.pravega.connectors.flink.FlinkPravegaWriter;
+import io.pravega.connectors.flink.PravegaConfig;
+import org.apache.flink.api.java.utils.ParameterTool;
 import org.fusesource.mqtt.client.BlockingConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.Message;
 import org.fusesource.mqtt.client.QoS;
 import org.fusesource.mqtt.client.Topic;
 
-import io.pravega.client.ClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 
@@ -25,6 +29,9 @@ public class MqttWriter {
             URI controllerURI = Parameters.getControllerURI();
             String scope = Parameters.getScope();
             String streamName = Parameters.getStreamName();
+            Boolean isEnableTls = Parameters.isEnableTls();
+            String tlsTrustStorePath = Parameters.getTrustStorePath();
+            Boolean isTlsValidateHostname = Parameters.isValidateHostname();
             String routingKey = Parameters.getRoutingKeyAttributeName();
             String MQTT_BROKER_URL = Parameters.getBrokerUrl();
             String MQTT_TOPIC = Parameters.getTopic();
@@ -51,7 +58,14 @@ public class MqttWriter {
                 }
             }
 
-            ClientFactory clientFactory = ClientFactory.withScope(scope, controllerURI);
+            ClientConfig clientConfig = ClientConfig.builder().
+                    controllerURI(controllerURI)
+                    .build();
+            if (isEnableTls) {
+                clientConfig.toBuilder().trustStore(tlsTrustStorePath).validateHostName(isTlsValidateHostname).build();
+            }
+
+            EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
             EventStreamWriter<JsonNode> writer = clientFactory.createEventWriter(streamName,
                     new JsonNodeSerializer(),
                     EventWriterConfig.builder().build());

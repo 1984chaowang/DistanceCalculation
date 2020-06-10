@@ -6,15 +6,15 @@ services:
     ports:
       - 1883:1883
       - 9001:9001
-  pravega:
-    image: pravega/pravega:latest
-    environment:
-      HOST_IP: 192.168.188.130
-    ports:
-      - 9090:9090
-      - 9091:9091
-      - 12345:12345
-    command: standalone
+  #pravega:
+  #  image: pravega/pravega:latest
+  #  environment:
+  #    HOST_IP: 192.168.188.130
+  #  ports:
+  #    - 9090:9090
+  #    - 9091:9091
+  #    - 12345:12345
+  #  command: standalone
   #If using Raspberry Pi to collect the data in real time, please comment out the service "mqttwriter".
   mqttwriter:
     build: ./MqttWriter
@@ -24,21 +24,20 @@ services:
     depends_on:
       - pravegagw
   pravegagw:
-    build: ./PravegaGateway
-    environment:
-      PRAVEGA_CONTROLLER: tcp://192.168.188.130:9090
-      PRAVEGA_SCOPE: Demo
-      PRAVEGA_STREAM: test
-      PRAVEGA_STANDALONE: "true"
-      ROUTING_KEY_ATTRIBUTE_NAME: sensor1
-      MQTT_BROKER_URL: tcp://192.168.188.130:1883
-      MQTT_TOPIC: test
-      #Set two ENV variables if using Nautilus 
-      #pravega_client_auth_method: Bearer
-      #pravega_client_auth_loadDynamic: true
-      #KEYCLOAK_SERVICE_ACCOUNT_FILE: ${HOME}/keycloak.json
+    #non 
+    build: 
+      context: ./PravegaGateway
+      # Select the correct dockerfile for building image according to if you need tls
+      dockerfile: Dockerfile.non.tls
+      #dockerfile: Dockerfile.tls
+    env_file:
+      - ./PravegaGateway/env.tls.txt
+      #- ./PravegaGateway/env.non.tls.txt
+    volumes:
+      - ./PravegaGateway/keycloak.json:/opt/PravegaGateway/keycloak.json
+      - ./PravegaGateway/tls.crt:/opt/PravegaGateway/tls.crt
     depends_on:
-      - pravega
+    # - pravega
       - mqtt
   influxDB:
     image: docker.io/influxdb:latest

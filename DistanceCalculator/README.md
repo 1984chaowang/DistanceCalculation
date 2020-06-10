@@ -10,9 +10,9 @@ _Fixed window_
 
 _Distance Calculation logical_
     
-    Normal: <=1m
-    A little Far: > 1m && <= 3m
-    Far: > 3m
+    Normal: <=5m
+    A little Far: > 5m && <= 7m
+    Far: > 7m
 
 **options:**
 

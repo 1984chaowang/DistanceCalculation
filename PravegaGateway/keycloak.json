@@ -1,0 +1,11 @@
+{
+  "realm": "nautilus",
+  "auth-server-url": "https://keycloak.nautilus1.shsdp.net/auth",
+  "ssl-required": "external",
+  "resource": "demo-pravega",
+  "verify-token-audience": true,
+  "credentials": {
+    "secret": "48a6df42-f144-4644-9f71-a016e51c71c0"
+  },
+  "confidential-port": 0
+}
