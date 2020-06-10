@@ -35,7 +35,27 @@ The env variables need to be set:
  **MQTT_TOPIC**: 
  
      The topic name where the GW consumes from. default is "demo" if not specified
+
+ **PRAVEGA_ENABLE_TLS**:
+ 
+     Enable TLS if needs it, by default it is false
+ 
+ **KEYCLOAK_SERVICE_ACCOUNT_FILE**:
+  
+     Specify the path of keycloak authentication/authorization file while working with SDP 
+ 
+ **PRAVEGA_TLS_TRUST_STORE_PATH**:
+ 
+     Enable TLS if needs it, by default it is false
      
+ **PRAVEGA_TLS_TRUST_STORE_PATH**:
+ 
+     Specify the path of CA certificate while tls is enabled
+     
+ **PRAVEGA_TLS_VALIDATE_HOST_NAME**:
+ 
+     Specify if the hostname needs to be validated while tls is enabled
+
  
  The env variables for Pravega Credential:
  
