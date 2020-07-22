@@ -1,54 +1,56 @@
 package io.pravega.example.writers;
 
-import java.util.concurrent.TimeUnit;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.pravega.client.ClientConfig;
-import io.pravega.client.EventStreamClientFactory;
-import io.pravega.connectors.flink.FlinkPravegaWriter;
-import io.pravega.connectors.flink.PravegaConfig;
-import org.apache.flink.api.java.utils.ParameterTool;
+import io.pravega.client.stream.impl.UTF8StringSerializer;
 import org.fusesource.mqtt.client.BlockingConnection;
 import org.fusesource.mqtt.client.MQTT;
 import org.fusesource.mqtt.client.Message;
 import org.fusesource.mqtt.client.QoS;
 import org.fusesource.mqtt.client.Topic;
 
+import io.pravega.client.ClientConfig;
+import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.stream.EventStreamWriter;
 import io.pravega.client.stream.EventWriterConfig;
 
+import java.net.URISyntaxException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 public class MqttWriter {
+    private static final Logger LOG = LoggerFactory.getLogger(MqttWriter.class);
+    private final static URI controllerURI = Parameters.getControllerURI();
+    private final static String scope = Parameters.getScope();
+    private final static String streamName = Parameters.getStreamName();
+    private final static Boolean isEnableTls = Parameters.isEnableTls();
+    private final static String tlsTrustStorePath = Parameters.getTrustStorePath();
+    private final static Boolean isTlsValidateHostname = Parameters.isValidateHostname();
+    private final static String routingKey = Parameters.getRoutingKeyAttributeName();
+    private final static String MQTT_BROKER_URL = Parameters.getBrokerUrl();
+    private final static String MQTT_TOPIC = Parameters.getTopic();
+    private final static String MQTT_CLIENT_ID = Parameters.getClientId();
+    private final static Boolean MQTT_isCLEAN_SESSION = Parameters.isClenSession();
 
     public static void main(String[] args) {
         try {
-            System.out.println("START:");
-            URI controllerURI = Parameters.getControllerURI();
-            String scope = Parameters.getScope();
-            String streamName = Parameters.getStreamName();
-            Boolean isEnableTls = Parameters.isEnableTls();
-            String tlsTrustStorePath = Parameters.getTrustStorePath();
-            Boolean isTlsValidateHostname = Parameters.isValidateHostname();
-            String routingKey = Parameters.getRoutingKeyAttributeName();
-            String MQTT_BROKER_URL = Parameters.getBrokerUrl();
-            String MQTT_TOPIC = Parameters.getTopic();
+            LOG.info("START:");
+            LOG.info("Connecting to Broker1 using MQTT");
+            LOG.info("MQTT_BROKER_URL: " + MQTT_BROKER_URL);
+            LOG.info("MQTT_TOPIC: " + MQTT_TOPIC);
 
-            System.out.println("Connecting to Broker1 using MQTT");
-            System.out.println("MQTT_BROKER_URL: " + MQTT_BROKER_URL);
-            System.out.println("MQTT_TOPIC: " + MQTT_TOPIC);
             MQTT mqtt = new MQTT();
             mqtt.setHost(MQTT_BROKER_URL);
-            mqtt.setClientId("mqtt001");
-            mqtt.setCleanSession(false);
+            mqtt.setClientId(MQTT_CLIENT_ID);
+            mqtt.setCleanSession(MQTT_isCLEAN_SESSION);
             BlockingConnection connection = mqtt.blockingConnection();
             connection.connect();
-            System.out.println("Connected to MQTT blocker " + MQTT_BROKER_URL);
+
+            LOG.info("Connected to MQTT blocker " + MQTT_BROKER_URL);
 
             // Subscribe to  MQTT topic
-            Topic[] topics = {new Topic(MQTT_TOPIC, QoS.AT_LEAST_ONCE)};
+            Topic[] topics = {new Topic(MQTT_TOPIC, QoS.AT_MOST_ONCE)};
             connection.subscribe(topics);
 
             if (Parameters.isPravegaStandalone()) {
@@ -66,23 +68,24 @@ public class MqttWriter {
             }
 
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
-            EventStreamWriter<JsonNode> writer = clientFactory.createEventWriter(streamName,
-                    new JsonNodeSerializer(),
+            EventStreamWriter<String> writer = clientFactory.createEventWriter(streamName,
+                    new UTF8StringSerializer(),
                     EventWriterConfig.builder().build());
+
 
             while(true) {
                 Message record = connection.receive(1, TimeUnit.SECONDS);
                 if (record != null) {
                     record.ack();
                     String message = new String(record.getPayload());
-
-                    // Deserialize the JSON message.
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    JsonNode element = objectMapper.readTree(message);
-                    System.out.println("Writing message: " + element.toString() + " with routing-key: " + routingKey + " to stream " + scope + "/" + streamName);
-                    writer.writeEvent(routingKey, element);
+                    LOG.info("Writing message: " + message + " with routing-key: " + routingKey + " to stream " + scope + "/" + streamName);
+                    writer.writeEvent(routingKey, message);
                 }
             }
+        }
+        catch (URISyntaxException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
         catch (Exception e) {
             e.printStackTrace();

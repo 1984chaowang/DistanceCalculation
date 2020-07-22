@@ -33,6 +33,8 @@ public class Parameters {
     public static  String getTopic() {
         return getEnvVar("MQTT_TOPIC", "FIDELITY.ADS");
     }
+    public static String getClientId() { return  getEnvVar("MQTT_CLIENT_ID", "mqtt001");}
+    public static boolean isClenSession() { return  getEnvVar("MQTT_IS_CLEAN_SESSION", "false").equals("true");}
 
     private static String getEnvVar(String name, String defaultValue) {
         String value = System.getenv(name);

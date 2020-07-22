@@ -10,32 +10,39 @@ The env variables need to be set:
 
  **PRAVEGA_CONTROLLER**: 
  
-       The URI to the controller in the form "tcp://host:port". default is "tcp://127.0.0.1:9090" if not specified
+       The URI to the controller in the form "tcp://host:port", default is "tcp://127.0.0.1:9090" if not specified
  
  **PRAVEGA_SCOPE**: 
  
-        The scope name of the stream to write into. default is "demo" if not specified
+        The scope name of the stream to write into, default is "demo" if not specified
  
  **PRAVEGA_STREAM**: 
  
-        The stream name of the stream to write into. default is "data" if not specified
+        The stream name of the stream to write into, default is "data" if not specified
  
  **PRAVEGA_STANDALONE**: 
  
-        The indicator of Pravega crentials enabled. default is "false" if not specified
+        The indicator of Pravega crentials enabled, default is "false" if not specified
  
  **ROUTING_KEY_ATTRIBUTE_NAME**:
  
-        The routing key of the message to write. default is "remote_addr" if not specified
+        The routing key of the message to write, default is "remote_addr" if not specified
  
  **MQTT_BROKER_URL**: 
  
-    The MQTT broker URL where the GW connects to. default is "tcp://127.0.0.1:1883" if not specified
+ 	The MQTT broker URL where the GW connects to, default is "tcp://127.0.0.1:1883" if not specified
  
  **MQTT_TOPIC**: 
  
-     The topic name where the GW consumes from. default is "demo" if not specified
+ 	The topic name where the GW consumes from, default is "demo" if not specified
+ 
+ **MQTT_CLIENT_ID**: 
+ 
+ 	The client id what the GW represents of, default is "mqtt001" if not specified
 
+ **MQTT_IS_CLEAN_SESSION**:  
+ 	The indiator that figures out if MQTT session needs to be kept in MQTT server, default is "false" if not specified
+ 
  **PRAVEGA_ENABLE_TLS**:
  
      Enable TLS if needs it, by default it is false

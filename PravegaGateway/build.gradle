@@ -93,8 +93,9 @@ dependencies {
     flinkShadowJar "org.fusesource.mqtt-client:mqtt-client:1.14"
 
 
-    compile "log4j:log4j:${log4jVersion}"
-    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+    compile "org.slf4j:slf4j-api:${slf4jVersion}"
+    flinkShadowJar "ch.qos.logback:logback-classic:${logbackVersion}"
+    flinkShadowJar "ch.qos.logback:logback-core:${logbackVersion}"
 
     // Add test dependencies here.
     // testCompile "junit:junit:4.12"
