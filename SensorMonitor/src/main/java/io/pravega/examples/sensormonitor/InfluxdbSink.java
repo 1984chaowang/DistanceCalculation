@@ -1,4 +1,4 @@
-package io.pravega.flinkapp;
+package io.pravega.examples.sensormonitor;
 
 
 import org.apache.flink.configuration.Configuration;
@@ -10,7 +10,7 @@ import org.influxdb.dto.Query;
 
 import java.util.concurrent.TimeUnit;
 
-public class InfluxdbSink extends RichSinkFunction<OutSenorData> {
+public class InfluxdbSink extends RichSinkFunction<OutputData> {
     InfluxDB influxDB = null;
     String influxdbUrl = "";
     String influxdbUsername = "";
@@ -27,17 +27,15 @@ public class InfluxdbSink extends RichSinkFunction<OutSenorData> {
     }
 
     @Override
-    public void invoke(OutSenorData value) {
+    public void invoke(OutputData value) {
         try {
             //String influxdbDbName = "demo";
             influxDB.query(new Query("CREATE DATABASE " + influxdbDbName));
             influxDB.setDatabase(influxdbDbName);
             System.out.println("value: " + value);
-            influxDB.write(Point.measurement(value.getSensorid())
-                    .time(value.getTimestamp(), TimeUnit.MILLISECONDS)
-                    .addTag("")
-                    .addField("DIFFERENCE", value.getDifference())
-                    .addField("TREND", value.getTrend())
+            influxDB.write(Point.measurement("sensors")
+                    .time(value.getTimestamp(), TimeUnit.SECONDS)
+                    .tag("id",value.getSensorid())
                     .addField("AVERAGE", value.getAverage())
                     .build());
         } catch(Exception e) {

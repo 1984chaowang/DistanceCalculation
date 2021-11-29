@@ -1,0 +1,23 @@
+apiVersion: flink.nautilus.dellemc.com/v1beta1
+kind: FlinkApplication
+metadata:
+  name: sensor-dc-job
+  namespace: demo
+spec:
+  flinkVersion: 1.10.0
+  mavenCoordinate: io.pravega.flinkapp:DistanceCalculator:4.0
+  parallelism: 1
+  parameters:
+    - name: pravega_scope
+      value: demo
+    - name: pravega_stream
+      value: test
+    - name: pravega_controller_uri
+      value: tcp://10.124.19.54:9090
+    - name: influxdb_username
+      value: root
+    - name: influxdb_password
+      value: root
+    - name: influxdb_DbName
+      value: demo
+  state: started

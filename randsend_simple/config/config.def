@@ -1,0 +1,30 @@
+﻿#Message send mode, 1 means socket communication mode, 2 means MQTT mode
+Mode:
+  2
+
+#socket communication mode
+IP:
+  127.0.0.1
+
+Port:
+  8000
+
+#MQTT mode
+Broker-host:
+  192.168.188.130
+
+MQTT-port:
+  1883
+
+Topic:
+  test
+
+#Data configure
+Avro-serialize:
+    0
+
+ANACount:
+  20
+
+POLCount:
+  30

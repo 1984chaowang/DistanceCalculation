@@ -63,7 +63,8 @@ services:
     volumes:
       - ./Visualization/Config/grafana-dashboard-provider.yaml:/etc/grafana/provisioning/dashboards/grafana-dashboard-provider.yaml
       - ./Visualization/Config/influxdb-datasource.yaml:/etc/grafana/provisioning/datasources/influxdb-datasource.yaml
-      - ./Visualization/Config/dashboard.json:/var/lib/grafana/dashboards/dashboard.json      
+      - ./Visualization/Config/dashboard.json:/var/lib/grafana/dashboards/dashboard.json
+      - ./Visualization/Config/Sensors_Oil Level.json:/var/lib/grafana/dashboards/Sensors_Oil Level.json
     links:
       - influxDB
     depends_on:
